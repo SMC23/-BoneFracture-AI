@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BoneFracture AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #00f2fe; --bg: #0a0e17; --card: rgba(255, 255, 255, 0.05); --secondary: #a29bfe; }
+        body { background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 40px; display: flex; justify-content: center; }
+        .dashboard { width: 100%; max-width: 1200px; }
+        .glass-card { background: var(--card); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        h1 { font-size: 32px; font-weight: 700; background: linear-gradient(to right, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 10px 0; }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 100px; background: rgba(0,242,254,0.1); color: var(--primary); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px; }
+
+        /* Dos columnas: visión a la izquierda, chat a la derecha */
+        .workspace-container { display: flex; gap: 40px; margin-top: 20px; }
+        .panel-left, .panel-right { flex: 1; min-width: 0; }
+
+        input[type="file"] { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; width: 100%; border: 2px dashed rgba(255,255,255,0.2); cursor: pointer; color: #aaa; box-sizing: border-box; }
+        button { background: linear-gradient(45deg, #00f2fe, #4facfe); border: none; color: white; padding: 16px 32px; border-radius: 12px; font-weight: 700; width: 100%; margin-top: 20px; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,242,254,0.3); }
+        button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(0,242,254,0.4); }
+        button:disabled { background: #222; color: #555; box-shadow: none; cursor: not-allowed; transform: none; }
+
+        .results { margin-top: 30px; display: none; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+        .pipeline-results { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
+        .prediction-box { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 15px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
+
+        .confidence-circle { width: 65px; height: 65px; border: 3px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: var(--primary); }
+        .confidence-circle.purple { border-color: var(--secondary); color: var(--secondary); }
+
+        /* Chat */
+        .chat-wrapper { display: flex; flex-direction: column; height: 380px; background: rgba(0,0,0,0.2); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); padding: 20px; box-sizing: border-box; }
+        .chat-history { flex: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 15px; }
+        .chat-bubble { margin-bottom: 12px; padding: 12px 16px; border-radius: 14px; max-width: 85%; font-size: 14px; line-height: 1.4; }
+        .chat-bubble.bot { background: rgba(0, 242, 254, 0.04); border-left: 3px solid var(--primary); align-self: flex-start; color: #ccd6f6; }
+        .chat-bubble.user { background: rgba(162, 155, 254, 0.15); align-self: flex-end; color: white; margin-left: auto; text-align: right; }
+        .chat-input-row { display: flex; gap: 10px; }
+        .chat-input-row input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 14px; border-radius: 10px; color: white; font-family: inherit; font-size: 14px; }
+        .chat-input-row input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .domain-warning { display: none; margin-bottom: 15px; padding: 12px 16px; border-radius: 12px; background: rgba(253, 203, 110, 0.10); border: 1px solid rgba(253, 203, 110, 0.35); color: #ffeaa7; font-size: 13px; line-height: 1.5; }
+        .domain-warning ul { margin: 6px 0 0 0; padding-left: 18px; }
+        .disclaimer { margin: 30px 0 0 0; padding: 14px 18px; border-radius: 12px; background: rgba(255, 118, 117, 0.08); border: 1px solid rgba(255, 118, 117, 0.25); color: #ffb3b2; font-size: 13px; line-height: 1.5; }
+
+        @media (max-width: 850px) {
+            .workspace-container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="glass-card">
+            <span class="status-badge">Proyecto académico</span>
+            <h1>Detector de Fracturas Óseas</h1>
+            <p style="color: #8892b0; margin-bottom: 25px;">Radiografías de codo, mano y hombro · ResNet50 + un Transformer hecho desde cero</p>
+
+            <div class="workspace-container">
+
+                <div class="panel-left">
+                    <h2 style="font-size: 18px; color: white; margin-top: 0; margin-bottom: 15px;">1. Sube una radiografía</h2>
+                    <form id="uploadForm">
+                        <input type="file" name="file" id="fileInput" accept=".png,.jpg,.jpeg" required>
+                        <button type="submit" id="submitBtn">Analizar</button>
+                    </form>
+
+                    <div class="results" id="resultsBox">
+                        <div class="domain-warning" id="domainWarning"></div>
+                        <div class="pipeline-results">
+                            <div class="prediction-box">
+                                <div>
+                                    <p style="color: #8892b0; margin: 0; font-size: 13px;">Región anatómica</p>
+                                    <h2 id="bodyPartLabel" style="margin: 5px 0 0 0; font-size: 22px; color: var(--secondary);">--</h2>
+                                </div>
+                                <div class="confidence-circle purple" id="bodyPartConf">--%</div>
+                            </div>
+
+                            <div class="prediction-box">
+                                <div>
+                                    <p style="color: #8892b0; margin: 0; font-size: 13px;">Resultado</p>
+                                    <h2 id="diagLabel" style="margin: 5px 0 0 0; font-size: 22px;">--</h2>
+                                </div>
+                                <div class="confidence-circle" id="confLabel">--%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-right">
+                    <h2 style="font-size: 18px; color: white; margin-top: 0; margin-bottom: 15px;">2. Pregunta sobre el resultado</h2>
+                    <div class="chat-wrapper">
+                        <div class="chat-history" id="chatHistory">
+                            <div class="chat-bubble bot">Hola. Sube una radiografía y después pregúntame sobre el resultado.</div>
+                        </div>
+                        <div class="chat-input-row">
+                            <input type="text" id="chatInput" placeholder="¿Es grave?" disabled>
+                            <button id="sendBtn" style="margin-top: 0; width: auto; padding: 0 20px;" disabled>Preguntar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <p class="disclaimer">⚠️ Proyecto académico. Los resultados son generados por modelos de IA experimentales y <b>no constituyen un diagnóstico médico</b>. Consulta siempre a un profesional de la salud.</p>
+        </div>
+    </div>
+
+    <script>
+        // Todo el texto que viene del servidor se inserta con textContent (sin riesgo de XSS)
+        let diagnostico = null; // predicción de la CNN; se envía al chat como contexto
+
+        const traducirParteCuerpo = (parte) => {
+            const traducciones = { 'Elbow': 'Codo', 'Hand': 'Mano', 'Shoulder': 'Hombro' };
+            return traducciones[parte] || parte;
+        };
+        const porcentaje = (x) => (x * 100).toFixed(1) + "%";
+
+        // Aviso cuando la imagen no se parece a las de entrenamiento
+        function mostrarAvisoDominio(avisos) {
+            const caja = document.getElementById('domainWarning');
+            caja.replaceChildren();
+            caja.style.display = avisos.length ? 'block' : 'none';
+            if (!avisos.length) return;
+            const titulo = document.createElement('b');
+            titulo.textContent = '⚠️ Resultado poco fiable: imagen fuera del dominio del modelo';
+            const lista = document.createElement('ul');
+            avisos.forEach(a => { const li = document.createElement('li'); li.textContent = a; lista.appendChild(li); });
+            caja.append(titulo, lista);
+        }
+
+        // 1. Subir la radiografía y mostrar la predicción
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "Analizando...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: new FormData(e.target) });
+                const data = await res.json();
+                if (!data.prediction) {
+                    alert(data.error || "No se pudo analizar la imagen.");
+                    return;
+                }
+                diagnostico = data.prediction;
+                const parte = traducirParteCuerpo(diagnostico.body_part);
+
+                document.getElementById('resultsBox').style.display = 'block';
+                document.getElementById('bodyPartLabel').textContent = parte;
+                document.getElementById('bodyPartConf').textContent = porcentaje(diagnostico.body_part_confidence);
+                document.getElementById('diagLabel').textContent = diagnostico.class;
+                document.getElementById('confLabel').textContent = porcentaje(diagnostico.confidence);
+                mostrarAvisoDominio(diagnostico.warnings || []);
+
+                document.getElementById('chatInput').disabled = false;
+                document.getElementById('sendBtn').disabled = false;
+                const historial = document.getElementById('chatHistory');
+                historial.replaceChildren();
+                agregarBurbuja(historial, 'bot',
+                    `Listo: ${parte}, resultado "${diagnostico.class}". ¿Qué quieres saber?`, 'Transformer:');
+            } catch (error) {
+                console.error(error);
+                alert("No se pudo conectar con el servidor.");
+            } finally {
+                btn.innerText = "Analizar";
+                btn.disabled = false;
+            }
+        };
+
+        // 2. Preguntar al Transformer usando la predicción como contexto
+        document.getElementById('sendBtn').onclick = enviarPregunta;
+        document.getElementById('chatInput').addEventListener("keypress", (e) => { if (e.key === 'Enter') enviarPregunta(); });
+
+        async function enviarPregunta() {
+            const input = document.getElementById('chatInput');
+            const pregunta = input.value.trim();
+            if (!pregunta || !diagnostico) return;
+
+            const historial = document.getElementById('chatHistory');
+            agregarBurbuja(historial, 'user', pregunta);
+            input.value = "";
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pregunta: pregunta, diagnostico_cnn: diagnostico })
+                });
+                const data = await res.json();
+                agregarBurbuja(historial, 'bot', data.respuesta, 'Transformer:');
+            } catch (error) {
+                const burbuja = agregarBurbuja(historial, 'bot', 'No se pudo conectar con el chat.', 'Error:');
+                burbuja.style.color = '#ff7675';
+            }
+        }
+
+        function agregarBurbuja(historial, tipo, texto, etiqueta) {
+            const burbuja = document.createElement('div');
+            burbuja.className = `chat-bubble ${tipo}`;
+            if (etiqueta) {
+                const b = document.createElement('b');
+                b.textContent = etiqueta + ' ';
+                burbuja.appendChild(b);
+            }
+            burbuja.appendChild(document.createTextNode(texto));
+            historial.appendChild(burbuja);
+            historial.scrollTop = historial.scrollHeight;
+            return burbuja;
+        }
+    </script>
+</body>
+</html>

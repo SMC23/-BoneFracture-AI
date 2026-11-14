@@ -1,0 +1,16 @@
+# Entornos y configuración local
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+
+# Datasets y archivos comprimidos
+data/
+*.zip
+
+# Pesos de los modelos (se publican en Hugging Face Hub)
+weights/
+*.h5
+*.pth

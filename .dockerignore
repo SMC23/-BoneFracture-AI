@@ -1,0 +1,14 @@
+.git
+.vscode
+.pytest_cache
+venv
+.venv
+__pycache__
+*.pyc
+.env
+data
+weights
+notebooks
+reports
+tests
+*.zip
