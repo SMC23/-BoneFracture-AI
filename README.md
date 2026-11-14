@@ -86,6 +86,7 @@ En MURA, el detector funciona mejor con el codo (AUC 0,91) que con la mano (0,82
 
 ### Limitaciones
 - **Se le escapan fracturas.** Cuando el detector encuentra la fractura, el tipo se acierta casi siempre (97 %). El problema está antes: el detector solo encuentra alrededor de la mitad de las fracturas del conjunto de test (57 % en Mendeley y 46 % en FracAtlas). Es la parte con más margen de mejora.
+- **Fracturas pequeñas en imágenes grandes.** Los modelos trabajan con imágenes de 224 × 224 píxeles. Cuando una radiografía de alta resolución se reduce a ese tamaño, una fractura que ocupa una zona pequeña puede volverse casi invisible. En una prueba con un codo con fractura de antebrazo, el detector dio un 0,2 % de probabilidad de fractura con la imagen completa, pero un 98,6 % al recortar solo la zona de la lesión. Analizar la imagen por recortes no resolvió el problema en general: en MURA bajó el AUC de 0,865 a 0,84 porque aumentaron las falsas alarmas. La solución de fondo sería reentrenar con más resolución.
 - En MURA, "anormal" no siempre significa fractura: también incluye artrosis, implantes y otras lesiones. Se usó como la mejor aproximación disponible.
 - Solo conoce codo, mano y hombro. Con otros huesos, o con imágenes que tienen flechas, texto o recortes, el resultado no es fiable. La app avisa en la mayoría de esos casos, pero no en todos.
 
@@ -184,5 +185,6 @@ Por la licencia de MURA, los modelos de este proyecto son **solo para uso acadé
 
 ## Próximos pasos
 - Conseguir que el detector encuentre más fracturas, entrenándolo con datos de más hospitales y más huesos.
+- Entrenar con imágenes de mayor resolución (por ejemplo, 384 × 384) para no perder las fracturas pequeñas.
 - Mapas de calor (Grad-CAM) para ver en qué parte de la imagen se fija el modelo.
 - Un modelo que reconozca cuándo una imagen no es una radiografía, en lugar de usar reglas fijas.
