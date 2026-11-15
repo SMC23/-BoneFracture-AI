@@ -3,3 +3,16 @@ testpaths = ["tests"]
 markers = [
     "slow: usa los pesos reales de los modelos; se excluye del CI con -m \"not slow\"",
 ]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+# E/W: estilo PEP 8 · F: errores reales (imports sin usar, nombres no definidos) · I: orden de imports
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# Frases del corpus del chatbot: partirlas cambiaría el vocabulario y obligaría a reentrenar
+"scripts/train_chatbot.py" = ["E501"]

@@ -1,0 +1,70 @@
+# Integración continua: lint + pruebas rápidas, y verificación de que la imagen Docker se construye.
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+# Si llega un push nuevo a la misma rama, se cancela la ejecución anterior (ahorra minutos)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Mínimos permisos: el workflow solo lee el código; no publica nada
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint y pruebas
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TF_CPP_MIN_LOG_LEVEL: "2"  # menos mensajes de TensorFlow en el log
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"  # la misma que el Dockerfile
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      # El lint va primero y solo instala ruff: si hay un error de estilo, falla en segundos
+      - name: Lint (ruff)
+        run: |
+          pip install "$(grep '^ruff==' requirements-dev.txt)"
+          ruff check --output-format=github .
+
+      # En CI no hay GPU: se usan las versiones solo-CPU de PyTorch y TensorFlow
+      # (mismo código y mismos resultados, pero descargas mucho más pequeñas)
+      - name: Instalar dependencias (CPU)
+        run: |
+          pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+          sed -i 's/^tensorflow==/tensorflow-cpu==/' requirements.txt
+          pip install -r requirements-dev.txt
+
+      # Las pruebas "slow" necesitan los pesos reales, que no están en el repositorio
+      - name: Pruebas (pytest)
+        run: pytest -m "not slow" --cov=app --cov-report=term-missing
+
+  docker:
+    name: Construir imagen Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Solo comprueba que el Dockerfile funciona: no se publica la imagen (push: false)
+      # Las capas se guardan en la caché de GitHub Actions para que la próxima vez sea más rápido
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: bonefracture-ai:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

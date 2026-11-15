@@ -12,3 +12,6 @@ notebooks
 reports
 tests
 *.zip
+.github
+.coverage
+pyproject.toml

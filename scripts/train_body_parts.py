@@ -6,14 +6,12 @@ Datos: MURA (Stanford ML Group), regiones codo, mano y hombro.
 
 Uso (desde la raíz del proyecto):  python -m scripts.train_body_parts
 """
-import os
 from pathlib import Path
 
 import numpy as np
 from sklearn.model_selection import GroupShuffleSplit
 
-from scripts.pipeline import (BASE_DIR, SEED, assemble_and_save, build_backbone, evaluate,
-                              extract_features, train_head)
+from scripts.pipeline import BASE_DIR, SEED, assemble_and_save, build_backbone, evaluate, extract_features, train_head
 
 MURA_DIR = Path(BASE_DIR) / "data" / "mura"
 CLASSES = ["Elbow", "Hand", "Shoulder"]

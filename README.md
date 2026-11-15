@@ -11,6 +11,8 @@ short_description: Detección de fracturas con ResNet50 y un Transformer propio
 
 # BoneFracture AI
 
+[![CI](https://github.com/SMC23/-BoneFracture-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/SMC23/-BoneFracture-AI/actions/workflows/ci.yml)
+
 <!-- TODO: reemplazar <usuario> por el usuario de Hugging Face -->
 **[Probar la demo](https://huggingface.co/spaces/<usuario>/BoneFractureAI)**
 
@@ -135,13 +137,18 @@ docker build -t bonefracture-ai .
 docker run -p 7860:7860 -e HF_WEIGHTS_REPO=<usuario>/bonefracture-ai-weights bonefracture-ai
 ```
 
-**Tests:**
+Hay dos archivos de dependencias: `requirements.txt` tiene solo lo necesario para ejecutar la app, y `requirements-dev.txt` añade lo que hace falta para entrenar, correr las pruebas y el lint (scikit-learn, pandas, matplotlib, seaborn, pytest, pytest-cov y ruff).
+
+## Cómo correr las pruebas localmente
+
 ```bash
 pip install -r requirements-dev.txt
-pytest
+ruff check .                                   # lint
+pytest -m "not slow" --cov=app                 # pruebas rápidas: no necesitan los pesos (lo mismo que el CI)
+pytest -m slow                                 # pruebas con los modelos reales (requieren weights/)
 ```
 
-Hay dos archivos de dependencias: `requirements.txt` tiene solo lo necesario para ejecutar la app, y `requirements-dev.txt` añade lo que hace falta para entrenar y correr los tests (scikit-learn, pandas, matplotlib, seaborn y pytest).
+Las pruebas rápidas reemplazan las redes por objetos falsos, así que corren en un minuto y sin descargar nada. Las pruebas `slow` cargan los modelos de verdad y se saltan solas si no están los pesos. En cada push y pull request, GitHub Actions ejecuta el lint, las pruebas rápidas y la construcción de la imagen Docker ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 ## Entrenamiento
 
@@ -166,7 +173,7 @@ BoneFractureAI/
 ├── notebooks/          # Entrenamiento en Google Colab
 ├── scripts/            # Entrenamiento local
 ├── reports/            # Métricas y gráficos
-└── tests/              # Tests de la API
+└── tests/              # Pruebas (pytest)
 ```
 
 ## Créditos
