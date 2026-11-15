@@ -14,3 +14,7 @@ data/
 weights/
 *.h5
 *.pth
+
+# Cobertura de pruebas
+.coverage
+coverage.xml

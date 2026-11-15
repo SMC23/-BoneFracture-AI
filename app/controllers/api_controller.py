@@ -1,28 +1,18 @@
-"""Rutas de la API: /upload (análisis de la radiografía) y /chat (preguntas al Transformer)."""
+"""Rutas de la API: /upload (análisis de la radiografía) y /chat (preguntas al Transformer).
+
+Los modelos no se crean aquí: create_app() los guarda en current_app.extensions.
+"""
 import logging
 import os
 import tempfile
 
-from flask import Blueprint, jsonify, request
-
-from app.models.llm_assistant import MedicalAssistant
-from app.models.vision_model import BoneVisionManager
-from app.utils.weights import ensure_weights
+from flask import Blueprint, current_app, jsonify, request
 
 logger = logging.getLogger(__name__)
 
 api_bp = Blueprint("api", __name__)
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
-
-# Los modelos se cargan una sola vez al iniciar el servidor
-ensure_weights()
-vision_manager = BoneVisionManager()
-try:
-    assistant = MedicalAssistant()
-except Exception:
-    logger.exception("No se pudo cargar el chatbot; /chat no estará disponible")
-    assistant = None
 
 
 def allowed_file(filename):
@@ -43,7 +33,7 @@ def upload_image():
     os.close(fd)
     try:
         file.save(tmp_path)
-        prediction = vision_manager.predict_image(tmp_path)
+        prediction = current_app.extensions["vision"].predict_image(tmp_path)
     except Exception:
         logger.exception("Error al procesar la imagen")
         return jsonify({"error": "No se pudo procesar la imagen"}), 500
@@ -62,6 +52,8 @@ def chat_interactivo():
     if not pregunta or not isinstance(diagnostico_cnn, dict) \
             or "body_part" not in diagnostico_cnn or "class" not in diagnostico_cnn:
         return jsonify({"respuesta": "Faltan datos para procesar la consulta."}), 400
+
+    assistant = current_app.extensions["assistant"]
     if assistant is None:
         return jsonify({"respuesta": "El asistente no está disponible en este momento."}), 503
 
