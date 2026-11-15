@@ -13,9 +13,6 @@ short_description: Detección de fracturas con ResNet50 y un Transformer propio
 
 [![CI](https://github.com/SMC23/-BoneFracture-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/SMC23/-BoneFracture-AI/actions/workflows/ci.yml)
 
-<!-- TODO: reemplazar <usuario> por el usuario de Hugging Face -->
-**[Probar la demo](https://huggingface.co/spaces/<usuario>/BoneFractureAI)**
-
 BoneFracture AI analiza radiografías de **codo, mano y hombro**. Indica qué región es, si hay una fractura y, cuando la hay, si es **simple o conminuta**. Después se le pueden hacer preguntas sobre el resultado a un pequeño **Transformer implementado desde cero en PyTorch**.
 
 Es un proyecto universitario que recorre el ciclo completo de un modelo de visión: conseguir los datos, entrenar, medir con honestidad y llevarlo a una aplicación web.
@@ -97,7 +94,7 @@ En MURA, el detector funciona mejor con el codo (AUC 0,91) que con la mano (0,82
 Requiere **Python 3.10–3.12**.
 
 ```bash
-git clone https://github.com/<usuario>/BoneFractureAI.git
+git clone https://github.com/SMC23/-BoneFracture-AI.git BoneFractureAI
 cd BoneFractureAI
 python -m venv venv
 venv\Scripts\activate        # Windows
@@ -105,11 +102,11 @@ venv\Scripts\activate        # Windows
 pip install -r requirements.txt
 ```
 
-Los pesos de los modelos ocupan unos 650 MB, por lo que no están en este repositorio sino en Hugging Face Hub <!-- TODO: enlace al repo de pesos -->. Si se define esta variable de entorno, la app los descarga sola la primera vez:
+Los pesos de los modelos ocupan unos 650 MB, por lo que no están en este repositorio sino en [Hugging Face Hub](https://huggingface.co/SebasMC23/bonefracture-ai-weights). Si se define esta variable de entorno, la app los descarga sola la primera vez:
 
 ```bash
-set HF_WEIGHTS_REPO=<usuario>/bonefracture-ai-weights      # Windows (cmd)
-# export HF_WEIGHTS_REPO=<usuario>/bonefracture-ai-weights # Linux / macOS
+set HF_WEIGHTS_REPO=SebasMC23/bonefracture-ai-weights      # Windows (cmd)
+# export HF_WEIGHTS_REPO=SebasMC23/bonefracture-ai-weights # Linux / macOS
 ```
 
 También se pueden descargar a mano y dejarlos en `weights/`:
@@ -134,7 +131,7 @@ La app queda en http://localhost:5000. Basta con subir una radiografía y pregun
 **Con Docker:**
 ```bash
 docker build -t bonefracture-ai .
-docker run -p 7860:7860 -e HF_WEIGHTS_REPO=<usuario>/bonefracture-ai-weights bonefracture-ai
+docker run -p 7860:7860 -e HF_WEIGHTS_REPO=SebasMC23/bonefracture-ai-weights bonefracture-ai
 ```
 
 Hay dos archivos de dependencias: `requirements.txt` tiene solo lo necesario para ejecutar la app, y `requirements-dev.txt` añade lo que hace falta para entrenar, correr las pruebas y el lint (scikit-learn, pandas, matplotlib, seaborn, pytest, pytest-cov y ruff).

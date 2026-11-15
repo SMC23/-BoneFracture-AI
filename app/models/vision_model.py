@@ -30,7 +30,7 @@ def _color_saturation(filepath):
 class BoneVisionManager:
     """Región anatómica + fractura en dos etapas (¿hay fractura? -> ¿simple o conminuta?).
 
-    El orden de las clases coincide con scripts/train_body_parts.py y scripts/train_fracture.py.
+    El orden de las clases coincide con scripts/train_body_parts.py y notebooks/colab_todo_en_uno.py.
     """
     CLASS_PARTS = ["Elbow", "Hand", "Shoulder"]
     CLASS_TYPES = ["Fractura Conminuta", "Fractura Simple"]
