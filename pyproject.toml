@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: usa los pesos reales de los modelos; se excluye del CI con -m \"not slow\"",
+]
